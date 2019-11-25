@@ -3,8 +3,7 @@ ci-base/install_python.sh
 
 sysbench_version=${sysbench_version:-1.0.8}
 
-sudo apt install tee
-
+sudo apt -y -q install tee
 
 wget -q https://github.com/akopytov/sysbench/archive/${sysbench_version}.tar.gz
 tar xf ${sysbench_version}.tar.gz
