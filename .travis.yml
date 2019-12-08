@@ -4,7 +4,7 @@ os:
   - osx
 arch:
   - amd64
-  - ppc64le
+  # - ppc64le  # Apply patch
   - arm64
 
 install: ci-base/install.sh travis sysbench
