@@ -8,8 +8,8 @@ arch:
   - arm64
 
 install:
-  - ci-base/travis_install.sh
-  - ./install.sh
+  - ci-base/install.sh travis
+  - ./install.sh travis
 script: ./run.sh
 jobs:
   exclude:
