@@ -7,9 +7,7 @@ arch:
   - ppc64le
   - arm64
 
-install:
-  - ci-base/install.sh travis
-  - ./install.sh travis
+install: ci-base/install.sh travis sysbench
 script: ./run.sh
 jobs:
   exclude:
