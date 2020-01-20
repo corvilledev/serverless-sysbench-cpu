@@ -1,0 +1,10 @@
+---
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+Job:
+  image: python:3.8
+  before_script:
+    - ci-base/install.sh gitlabci sysbench
+  script:
+    - ./run.sh
