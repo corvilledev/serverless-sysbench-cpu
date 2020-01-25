@@ -1,7 +1,7 @@
 #!/bin/bash
 
 iterations=${iterations:-3}
-threads="1 2 4 8"
+threads="$(seq $(($(nproc)*2)))"
 
 for i in $(seq 1 $iterations) ; do
     for thread in $threads ; do
