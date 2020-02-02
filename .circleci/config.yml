@@ -8,13 +8,13 @@ executors:
     environment:
       FLAVOR_NAME: machine_medium
       IMAGE_NAME: ubuntu
-  machine_large:
-    machine:
-      image: ubuntu-1604:201903-01
-    resource_class: large
-    environment:
-      FLAVOR_NAME: machine_large
-      IMAGE_NAME: ubuntu
+  # machine_large:
+  #   machine:
+  #     image: ubuntu-1604:201903-01
+  #   resource_class: large
+  #   environment:
+  #     FLAVOR_NAME: machine_large
+  #     IMAGE_NAME: ubuntu
 
 jobs:
   run_machine_medium:
@@ -25,13 +25,13 @@ jobs:
           name: Run tests
           command: .circleci/run.sh
 
-  run_machine_large:
-    executor: machine_large
-    steps:
-      - checkout
-      - run:
-          name: Run tests
-          command: .circleci/run.sh
+  # run_machine_large:
+  #   executor: machine_large
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: Run tests
+  #         command: .circleci/run.sh
 
 workflows:
   version: 2
@@ -39,5 +39,5 @@ workflows:
     jobs:
       - run_machine_medium:
           context: cloudbeast
-      - run_machine_large:
-          context: cloudbeast
+      # - run_machine_large:
+      # context: cloudbeast

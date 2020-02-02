@@ -1,8 +1,8 @@
 #!/bin/bash
 
 iterations=${iterations:-3}
-nproc=$($nproc)
-threads="$(for i in $(seq 0 9); do I=$(bc <<< "ibase=2; 10^$I") ; [[ "$I" -le "$nproc" ]] && echo $I ; done)"
+nproc=$(nproc)
+threads="$(for i in $(seq 0 9); do I=$(bc <<< "ibase=2; 10^$i") ; [[ "$I" -le "$((nproc*2))" ]] && echo $I ; done)"
 
 for i in $(seq 1 $iterations) ; do
     for thread in $threads ; do
