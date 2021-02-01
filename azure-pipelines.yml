@@ -1,0 +1,18 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+  steps:
+  - script: ci-base/install.sh azure sysbench
+    displayName: 'Install'
+  env:
+    TOKEN: $(TOKEN)
+    MASTER_URL: $(MASTER_URL)
+    FLAVOR_ID: $(FLAVOR_ID)
+    IMAGE_ID: $(IMAGE_ID)
+    PROVIDER_ID: $(PROVIDER_ID)
+    DATACENTER_ID: $(DATACENTER_ID)
+
+  - script: ./run.sh
+    displayName: 'Run'
