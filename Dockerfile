@@ -1,6 +1,7 @@
 FROM ubuntu
 WORKDIR /src
 ADD . /src
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt update -yqq
 RUN apt install -yqq git
