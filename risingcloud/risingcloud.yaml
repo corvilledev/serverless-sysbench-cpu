@@ -1,0 +1,21 @@
+name: sysbench-cpu
+url: sysbench-cpu
+team: 6297faca238be90024d91c41
+mode: risingcloud
+workspace: Sandbox
+from: ubuntu:20.04
+build: []
+deps:
+- apt-get update
+- apt-get install -y jq wget unzip make automake libtool pkg-config libaio-dev
+- wget https://github.com/akopytov/sysbench/archive/refs/heads/master.zip
+- unzip master.zip
+- cd sysbench-master && ./autogen.sh && ./configure --without-mysql && make -j && make install
+- chmod +x sysbench.sh
+daemons: []
+run: ./sysbench.sh
+timeout: 300000
+env: {}
+minWorkers: 0
+maxWorkers: 8
+maxStorage: 4000
