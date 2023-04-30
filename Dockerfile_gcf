@@ -1,0 +1,16 @@
+FROM python:3.10-slim
+
+WORKDIR /src
+ADD . /src
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt update -yqq
+RUN apt install -yqq git jq wget unzip make automake libtool pkg-config libaio-dev
+
+RUN wget https://github.com/akopytov/sysbench/archive/refs/heads/master.zip
+RUN unzip master.zip
+RUN cd sysbench-master && ./autogen.sh && ./configure --without-mysql && make -j && make install
+
+RUN pip install Flask functions-framework
+
+CMD ["functions-framework", "--target", "run_sysbench"]
