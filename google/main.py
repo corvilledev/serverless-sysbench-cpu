@@ -1,16 +1,18 @@
-import os
-import subprocess
-from google.cloud import functions
+import json
+from flask import jsonify
+from pyperformance.run import run_benchmarks
 
 def run_sysbench(request):
-    request_json = request.get_json(silent=True)
+    try:
+        # Run the pyperformance benchmarks
+        result = run_benchmarks(benchmarks=["bm_telco"], options=None)
 
-    threads = request_json.get('threads', 1) if request_json else 1
-    time = request_json.get('time', 5) if request_json else 5
-    max_prime = request_json.get('max_prime', 64000) if request_json else 64000
+        # Process the results
+        result_json = json.dumps(result.as_dict(), indent=4)
 
-    cmd = f'./sysbench.sh {threads} {time} {max_prime}'
-    result = subprocess.check_output(cmd, shell=True).decode('utf-8')
+        return jsonify({"status": "success", "message": "Pyperformance benchmarks have been executed.", "results": result_json})
 
-    return {"result": result}
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
 
