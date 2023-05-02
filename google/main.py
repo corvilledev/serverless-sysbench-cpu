@@ -4,38 +4,85 @@ import pkg_resources
 import os
 from pathlib import Path
 from flask import jsonify, request
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# Calculate allowed benchmarks once
+benchmarks_path = pkg_resources.resource_filename('pyperformance', 'data-files/benchmarks')
+ALLOWED_BENCHMARKS = [p.name for p in Path(benchmarks_path).iterdir() if p.is_dir()]
+
+def run_benchmark(benchmark_name, loops):
+    # Load the chosen benchmark
+    benchmark_file = os.path.join(benchmarks_path, benchmark_name, 'run_benchmark.py')
+    spec = importlib.util.spec_from_file_location(f"{benchmark_name}_module", benchmark_file)
+    benchmark_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(benchmark_module)
+
+    # Find the appropriate function to run the benchmark
+    for attr_name in dir(benchmark_module):
+        attr = getattr(benchmark_module, attr_name)
+        if callable(attr) and attr_name.startswith('bench_'):
+            benchmark_function = attr
+            break
+    else:
+        raise RuntimeError(f"Unable to find a suitable function to run the benchmark '{benchmark_name}'")
+
+    # Run the chosen benchmark
+    if benchmark_name == "bm_telco":
+        filename = os.path.join(benchmarks_path, benchmark_name, "data", "telco-bench.b")
+        result = benchmark_function(loops, filename)
+    else:
+        result = benchmark_function(loops)
+
+    return {"benchmark": benchmark_name, "result": result}
 
 def run_sysbench(request):
     try:
-        # Get the benchmark name from the query parameter
-        benchmark_name = request.args.get('benchmark', 'bm_telco')
+        # Get the benchmark names from the query parameter
+        req_data = request.get_json()
+        benchmark_names = req_data.get("benchmark", ["bm_telco"])
+        loops = req_data.get("loops", 1)
 
-        # Validate the benchmark name
-        benchmarks_path = pkg_resources.resource_filename('pyperformance', 'data-files/benchmarks')
-        allowed_benchmarks = [p.name for p in Path(benchmarks_path).iterdir() if p.is_dir()]
+        try:
+            loops = int(loops)
+        except ValueError:
+            return jsonify({"status": "error", "message": "Invalid loops value. Must be an integer."})
 
-        if benchmark_name not in allowed_benchmarks:
-            return jsonify({"status": "error", "message": f"Invalid benchmark name. Allowed benchmarks: {', '.join(allowed_benchmarks)}"})
-        
-        # Load the chosen benchmark
-        benchmark_file = os.path.join(benchmarks_path, benchmark_name, 'run_benchmark.py')
-        spec = importlib.util.spec_from_file_location(f"{benchmark_name}_module", benchmark_file)
-        benchmark_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(benchmark_module)
+        results = {}
+        for benchmark_name in benchmark_names:
+            # Validate the benchmark name
+            if benchmark_name not in ALLOWED_BENCHMARKS:
+                results[benchmark_name] = {"error": f"Invalid benchmark name. Allowed benchmarks: {', '.join(ALLOWED_BENCHMARKS)}"}
+                continue
 
-        # Run the chosen benchmark
-        def run_benchmark(loops=1):
-            filename = os.path.join(benchmarks_path, benchmark_name, "data", "telco-bench.b")
-            return benchmark_module.bench_telco(loops, filename)
+            # Load the chosen benchmark
+            benchmark_file = os.path.join(benchmarks_path, benchmark_name, 'run_benchmark.py')
+            spec = importlib.util.spec_from_file_location(f"{benchmark_name}_module", benchmark_file)
+            benchmark_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(benchmark_module)
 
-        result = run_benchmark()
+            # Find the appropriate function to run the benchmark
+            for attr_name in dir(benchmark_module):
+                attr = getattr(benchmark_module, attr_name)
+                if callable(attr) and attr_name.startswith('bench_'):
+                    benchmark_function = attr
+                    break
+            else:
+                results[benchmark_name] = {"error": f"Unable to find a suitable function to run the benchmark '{benchmark_name}'"}
+                continue
+
+            # Run the chosen benchmark
+            if benchmark_name == "bm_telco":
+                filename = os.path.join(benchmarks_path, benchmark_name, "data", "telco-bench.b")
+                result = benchmark_function(loops, filename)
+            else:
+                result = benchmark_function(loops)
+
+            results[benchmark_name] = {"benchmark": benchmark_name, "result": result}
 
         # Process the results
-        result_dict = {"benchmark": benchmark_name, "result": result}
-        result_json = json.dumps(result_dict, indent=4)
+        result_json = json.dumps(results, indent=4)
 
-        return jsonify({"status": "success", "message": f"Pyperformance benchmark '{benchmark_name}' has been executed.", "results": result_json})
+        return jsonify({"status": "success", "message": "Pyperformance benchmarks have been executed.", "results": result_json})
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
-
